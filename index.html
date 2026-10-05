@@ -198,10 +198,10 @@ button,input{font-family:inherit}
 .panel h3 small{font-weight:400;color:var(--tinta-suave);font-size:13px;margin-left:6px}
 
 /* ---------- Alta ---------- */
-.alta{display:grid;grid-template-columns:2fr 1.4fr .8fr auto;gap:12px;align-items:end}
+.alta{display:grid;grid-template-columns:2fr 1.4fr .8fr 1fr auto;gap:12px;align-items:end}
 @media (max-width:820px){ .alta{grid-template-columns:1fr} }
 label{display:block;font-size:13px;color:var(--tinta-suave);margin-bottom:5px}
-input[type=text],input[type=number]{
+input[type=text],input[type=number],select{
   width:100%;background:var(--panel-2);border:1px solid var(--linea);
   border-radius:10px;color:var(--tinta);padding:10px 12px;font-size:15px;
 }
@@ -243,7 +243,16 @@ input::placeholder{color:#5d7387}
 .consumo .pie{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:9px}
 .consumo .t{font-size:14px;font-variant-numeric:tabular-nums;color:var(--tinta-suave);font-weight:600}
 .tarjeta.rojo .consumo .t{color:var(--rojo-vivo)}
-.acciones-tarjeta{display:flex;gap:8px}
+.acciones-tarjeta{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.tiempos-col{display:flex;flex-direction:column;gap:3px}
+.consumo .tc{font-size:13px;font-variant-numeric:tabular-nums;color:var(--tinta-suave);font-weight:600}
+.consumo .tc b{color:var(--ceva-rojo);font-weight:700;letter-spacing:.02em}
+.consumo .tc.parado{color:var(--verde-vivo)}
+.btn.ceva{background:var(--ceva-rojo);color:#fff}
+.tipo{display:inline-block;padding:1px 9px;margin-left:6px;border-radius:999px;font-size:11.5px;font-weight:700;vertical-align:middle;letter-spacing:.03em;background:var(--panel-2);border:1px solid var(--linea);color:var(--tinta-suave)}
+.tipo.altura{color:#7cc4ff;border-color:rgba(124,196,255,.45)}
+.tipo.piso{color:#c9b8ff;border-color:rgba(201,184,255,.45)}
+.tv-tipo{font-size:.55em;margin-left:.6em;padding:.1em .6em;border-radius:999px;border:1px solid currentColor;opacity:.85;vertical-align:middle}
 
 /* ---------- KPIs ---------- */
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:18px}
@@ -544,6 +553,10 @@ td.dur{font-variant-numeric:tabular-nums;font-weight:600}
         <label for="lineas">Líneas</label>
         <input type="number" id="lineas" min="1" step="1" placeholder="0">
       </div>
+      <div>
+        <label for="tipo">Tipo de carga</label>
+        <select id="tipo"><option value="piso">Piso</option><option value="altura">Altura</option></select>
+      </div>
       <div><button class="btn" id="btnAgregar">Agregar cliente</button></div>
       <p class="aviso" id="aviso"></p>
     </div>
@@ -565,7 +578,8 @@ td.dur{font-variant-numeric:tabular-nums;font-weight:600}
       <div class="txt"><div class="n" id="kSla">0%</div><div class="t">Dentro de SLA</div></div>
     </div>
     <div class="kpi"><div class="n" id="kAtendidos">0</div><div class="t">Clientes atendidos</div></div>
-    <div class="kpi"><div class="n" id="kProm">00:00</div><div class="t">Tiempo promedio</div></div>
+    <div class="kpi"><div class="n" id="kProm">00:00</div><div class="t">Promedio mostrador</div></div>
+    <div class="kpi"><div class="n" id="kCeva">00:00</div><div class="t">Promedio CEVA</div></div>
     <div class="kpi"><div class="n" id="kMax">00:00</div><div class="t">Tiempo máximo</div></div>
     <div class="kpi"><div class="n" id="kMin">00:00</div><div class="t">Tiempo mínimo</div></div>
     <div class="kpi v"><div class="n" id="kCv">0</div><div class="t">Cerrados en verde</div></div>
@@ -597,8 +611,8 @@ td.dur{font-variant-numeric:tabular-nums;font-weight:600}
       <table>
         <thead>
           <tr>
-            <th>Cliente</th><th>Pedido</th><th>Líneas</th>
-            <th>Hora inicio</th><th>Hora fin</th><th>Duración</th><th>Estado final</th>
+            <th>Cliente</th><th>Pedido</th><th>Tipo</th><th>Líneas</th>
+            <th>Hora inicio</th><th>Parada CEVA</th><th>Hora fin</th><th>T. CEVA</th><th>T. Mostrador</th><th>Estado final</th>
           </tr>
         </thead>
         <tbody id="cuerpoHist"></tbody>
@@ -630,9 +644,20 @@ td.dur{font-variant-numeric:tabular-nums;font-weight:600}
       <p class="ayuda">Entre ambos valores la tarjeta se muestra en amarillo; al alcanzar este límite pasa a rojo.</p>
     </div>
 
+    <h3 style="margin-top:22px">Límites para Altura</h3>
+    <div class="campo">
+      <label for="cfgAlturaVerde">Hasta cuántos minutos una carga de altura se considera dentro de SLA</label>
+      <input type="number" id="cfgAlturaVerde" min="1" step="1">
+    </div>
+    <div class="campo">
+      <label for="cfgAlturaAmarillo">A partir de cuántos minutos una carga de altura queda fuera de SLA</label>
+      <input type="number" id="cfgAlturaAmarillo" min="2" step="1">
+      <p class="ayuda">Piso usa los límites de arriba. Altura usa estos (por defecto 20 y 30 minutos).</p>
+    </div>
+
     <div class="acciones" style="margin-top:0">
       <button class="btn" id="btnGuardarCfg">Guardar límites</button>
-      <button class="btn gris" id="btnDefecto">Volver a 10 y 15 minutos</button>
+      <button class="btn gris" id="btnDefecto">Volver a valores por defecto</button>
     </div>
     <p class="ok" id="okCfg"></p>
 
@@ -727,7 +752,7 @@ var Datos = (function(){
   var K_CONFIG    = "sla.mostrador.config.v1";
   var K_SENAL     = "sla.mostrador.senal.v1"; // dispara el evento 'storage' en la TV
 
-  var DEFECTO = { verdeMin:10, amarilloMin:15 };
+  var DEFECTO = { verdeMin:10, amarilloMin:15, alturaVerdeMin:20, alturaAmarilloMin:30 };
 
   function leerLista(clave){
     try{
@@ -753,13 +778,16 @@ var Datos = (function(){
   }
 
   function config(){
+    var d = { verdeMin:DEFECTO.verdeMin, amarilloMin:DEFECTO.amarilloMin, alturaVerdeMin:DEFECTO.alturaVerdeMin, alturaAmarilloMin:DEFECTO.alturaAmarilloMin };
     try{
       var c = JSON.parse(localStorage.getItem(K_CONFIG) || "null");
-      if(!c || typeof c.verdeMin !== "number" || typeof c.amarilloMin !== "number") return { verdeMin:DEFECTO.verdeMin, amarilloMin:DEFECTO.amarilloMin };
-      return { verdeMin:c.verdeMin, amarilloMin:c.amarilloMin };
-    }catch(e){
-      return { verdeMin:DEFECTO.verdeMin, amarilloMin:DEFECTO.amarilloMin };
-    }
+      if(!c || typeof c.verdeMin !== "number" || typeof c.amarilloMin !== "number") return d;
+      d.verdeMin = c.verdeMin; d.amarilloMin = c.amarilloMin;
+      if(typeof c.alturaVerdeMin === "number" && typeof c.alturaAmarilloMin === "number"){
+        d.alturaVerdeMin = c.alturaVerdeMin; d.alturaAmarilloMin = c.alturaAmarilloMin;
+      }
+      return d;
+    }catch(e){ return d; }
   }
 
   return {
@@ -785,20 +813,27 @@ var Sla = (function(){
   /** Igual que recargar(), pero informa si los límites cambiaron (lo usa la vista Monitor). */
   function refrescarConfig(){
     var nueva = Datos.config();
-    var cambio = (nueva.verdeMin !== cfg.verdeMin) || (nueva.amarilloMin !== cfg.amarilloMin);
+    var cambio = (nueva.verdeMin !== cfg.verdeMin) || (nueva.amarilloMin !== cfg.amarilloMin) ||
+                 (nueva.alturaVerdeMin !== cfg.alturaVerdeMin) || (nueva.alturaAmarilloMin !== cfg.alturaAmarilloMin);
     cfg = nueva;
     return cambio;
   }
 
-  function estado(ms){
-    if(ms >= cfg.amarilloMin * 60000) return "rojo";
-    if(ms >= cfg.verdeMin * 60000)    return "amarillo";
+  /** Límites según el tipo de carga (piso por defecto). */
+  function lim(tipo){
+    return tipo === "altura" ? { v:cfg.alturaVerdeMin, a:cfg.alturaAmarilloMin } : { v:cfg.verdeMin, a:cfg.amarilloMin };
+  }
+
+  function estado(ms, tipo){
+    var l = lim(tipo);
+    if(ms >= l.a * 60000) return "rojo";
+    if(ms >= l.v * 60000) return "amarillo";
     return "verde";
   }
 
   /** Porcentaje de SLA consumido, tomando el límite rojo como tope. */
-  function consumo(ms){
-    var tope = cfg.amarilloMin * 60000;
+  function consumo(ms, tipo){
+    var tope = lim(tipo).a * 60000;
     return Math.max(0, Math.min(1, ms / tope));
   }
 
@@ -852,12 +887,33 @@ function agregarCliente(){
   aviso.textContent = "";
 
   var lista = Datos.activos();
-  lista.push({ id:idUnico(), cliente:cliente, entrega:entrega, lineas:Number(lineas), inicio:Date.now() });
+  var tipo = $("tipo").value === "altura" ? "altura" : "piso";
+  lista.push({ id:idUnico(), cliente:cliente, entrega:entrega, tipo:tipo, lineas:Number(lineas), inicio:Date.now() });
   Datos.guardarActivos(lista);
 
   $("cliente").value = ""; $("entrega").value = ""; $("lineas").value = "";
+  $("tipo").value = "piso";
   $("cliente").focus();
 
+  dibujarActivos(true);
+}
+
+/** Detiene el tiempo de CEVA; el cronómetro del mostrador sigue corriendo. Se guarda al instante. */
+function paradaCeva(id){
+  var activos = Datos.activos();
+  var i = indicePorId(activos, id);
+  if(i === -1 || activos[i].cevaFin) return;
+  activos[i].cevaFin = Date.now();
+  Datos.guardarActivos(activos);
+  dibujarActivos(true);
+}
+
+function anularParadaCeva(id){
+  var activos = Datos.activos();
+  var i = indicePorId(activos, id);
+  if(i === -1 || !activos[i].cevaFin) return;
+  delete activos[i].cevaFin;
+  Datos.guardarActivos(activos);
   dibujarActivos(true);
 }
 
@@ -867,13 +923,15 @@ function finalizarCliente(id){
   if(i === -1) return;
 
   var reg = activos[i], fin = Date.now(), total = fin - reg.inicio;
+  var cevaFin = reg.cevaFin || fin;   // si no hubo parada CEVA, CEVA cierra junto con el mostrador
   activos.splice(i,1);
   Datos.guardarActivos(activos);
 
   var hist = Datos.historial();
   hist.unshift({
     id:reg.id, cliente:reg.cliente, entrega:reg.entrega, lineas:reg.lineas,
-    inicio:reg.inicio, fin:fin, duracion:total, estado:Sla.estado(total)
+    inicio:reg.inicio, fin:fin, duracion:total, estado:Sla.estado(total, reg.tipo), tipo:reg.tipo || "piso",
+    cevaFin:cevaFin, duracionCeva:cevaFin - reg.inicio
   });
   Datos.guardarHistorial(hist);
 
@@ -905,7 +963,7 @@ function ordenar(lista){
   var peso = { rojo:0, amarillo:1, verde:2 };
   var ahora = Date.now();
   return lista.slice().sort(function(a,b){
-    var ea = peso[Sla.estado(ahora-a.inicio)], eb = peso[Sla.estado(ahora-b.inicio)];
+    var ea = peso[Sla.estado(ahora-a.inicio, a.tipo)], eb = peso[Sla.estado(ahora-b.inicio, b.tipo)];
     if(ea !== eb) return ea - eb;
     return a.inicio - b.inicio;
   });
@@ -914,22 +972,28 @@ function ordenar(lista){
 function dibujarActivos(forzar){
   var lista = ordenar(Datos.activos());
   var ahora = Date.now();
-  var nueva = lista.map(function(c){ return c.id + ":" + Sla.estado(ahora-c.inicio); }).join("|");
+  var nueva = lista.map(function(c){ return c.id + ":" + Sla.estado(ahora-c.inicio, c.tipo) + ":" + (c.cevaFin || 0); }).join("|");
 
   if(forzar || nueva !== firmaLista){
     firmaLista = nueva;
     var html = "";
     for(var i=0;i<lista.length;i++){
-      var c = lista[i], ms = ahora - c.inicio, est = Sla.estado(ms);
+      var c = lista[i], ms = ahora - c.inicio, est = Sla.estado(ms, c.tipo);
       html +=
-        '<article class="tarjeta ' + est + '" data-inicio="' + c.inicio + '">' +
-          '<div class="cliente">' + texto(c.cliente) + '</div>' +
+        '<article class="tarjeta ' + est + '" data-inicio="' + c.inicio + '" data-tipo="' + (c.tipo === "altura" ? "altura" : "piso") + '" data-ceva-fin="' + (c.cevaFin || "") + '">' +
+          '<div class="cliente">' + texto(c.cliente) + '<span class="tipo ' + (c.tipo === "altura" ? "altura" : "piso") + '">' + (c.tipo === "altura" ? "ALTURA" : "PISO") + '</span></div>' +
           '<div class="detalle">Entrega ' + texto(c.entrega) + ' · ' + texto(c.lineas) + ' líneas · llegó ' + Sla.hora(c.inicio) + '</div>' +
           '<div class="consumo">' +
-            '<div class="riel"><div class="avance" style="width:' + (Sla.consumo(ms)*100).toFixed(1) + '%"></div></div>' +
+            '<div class="riel"><div class="avance" style="width:' + (Sla.consumo(ms, c.tipo)*100).toFixed(1) + '%"></div></div>' +
             '<div class="pie">' +
-              '<span class="t">' + Sla.duracion(ms) + ' en espera</span>' +
+              '<span class="tiempos-col">' +
+                '<span class="t">' + Sla.duracion(ms) + ' mostrador</span>' +
+                '<span class="tc' + (c.cevaFin ? ' parado' : '') + '"><b>CEVA</b> ' + Sla.duracion((c.cevaFin || ahora) - c.inicio) + (c.cevaFin ? ' · parado ' + Sla.hora(c.cevaFin) : ' · corriendo') + '</span>' +
+              '</span>' +
               '<span class="acciones-tarjeta">' +
+                (c.cevaFin
+                  ? '<button class="btn chico gris" data-ceva-anular="' + c.id + '">Anular parada</button>'
+                  : '<button class="btn chico ceva" data-ceva="' + c.id + '">Parada CEVA</button>') +
                 '<button class="btn chico" data-finalizar="' + c.id + '">Finalizar</button>' +
                 '<button class="btn chico gris" data-eliminar="' + c.id + '">Eliminar</button>' +
               '</span>' +
@@ -953,15 +1017,20 @@ function refrescarTiempos(){
   var tarjetas = document.querySelectorAll("#lista .tarjeta");
   for(var i=0;i<tarjetas.length;i++){
     var ms = ahora - Number(tarjetas[i].getAttribute("data-inicio"));
-    tarjetas[i].querySelector(".t").textContent = Sla.duracion(ms) + " en espera";
-    tarjetas[i].querySelector(".avance").style.width = (Sla.consumo(ms)*100).toFixed(1) + "%";
+    tarjetas[i].querySelector(".t").textContent = Sla.duracion(ms) + " mostrador";
+    var cf = Number(tarjetas[i].getAttribute("data-ceva-fin")) || 0;
+    if(!cf){
+      var tc = tarjetas[i].querySelector(".tc");
+      if(tc) tc.innerHTML = "<b>CEVA</b> " + Sla.duracion(ms) + " · corriendo";
+    }
+    tarjetas[i].querySelector(".avance").style.width = (Sla.consumo(ms, tarjetas[i].getAttribute("data-tipo"))*100).toFixed(1) + "%";
   }
 }
 
 function contadoresVivos(lista){
   var ahora = Date.now(), v=0, a=0, r=0;
   for(var i=0;i<lista.length;i++){
-    var e = Sla.estado(ahora-lista[i].inicio);
+    var e = Sla.estado(ahora-lista[i].inicio, lista[i].tipo);
     if(e==="verde") v++; else if(e==="amarillo") a++; else r++;
   }
   $("hActivos").textContent = lista.length;
@@ -983,9 +1052,12 @@ function dibujarHistorial(){
       "<tr>" +
         "<td>" + texto(h.cliente) + "</td>" +
         "<td>" + texto(h.entrega) + "</td>" +
+        "<td>" + (h.tipo === "altura" ? "Altura" : "Piso") + "</td>" +
         "<td>" + texto(h.lineas) + "</td>" +
         "<td>" + Sla.fechaHora(h.inicio) + "</td>" +
+        "<td>" + (h.cevaFin ? Sla.hora(h.cevaFin) : "—") + "</td>" +
         "<td>" + Sla.fechaHora(h.fin) + "</td>" +
+        '<td class="dur">' + (typeof h.duracionCeva === "number" ? Sla.duracion(h.duracionCeva) : "—") + "</td>" +
         '<td class="dur">' + Sla.duracion(h.duracion) + "</td>" +
         '<td><span class="pill ' + h.estado + '">' + etiqueta(h.estado) + "</span></td>" +
       "</tr>";
@@ -1001,11 +1073,12 @@ function dibujarHistorial(){
 }
 
 function calcularKpis(lista){
-  var n = lista.length, v=0, a=0, r=0, suma=0, max=0, min=Infinity;
+  var n = lista.length, v=0, a=0, r=0, suma=0, max=0, min=Infinity, sumaC=0, nC=0;
 
   for(var i=0;i<n;i++){
     var h = lista[i];
     suma += h.duracion;
+    if(typeof h.duracionCeva === "number"){ sumaC += h.duracionCeva; nC++; }
     if(h.duracion > max) max = h.duracion;
     if(h.duracion < min) min = h.duracion;
     if(h.estado==="verde") v++; else if(h.estado==="amarillo") a++; else r++;
@@ -1015,6 +1088,7 @@ function calcularKpis(lista){
   $("kSla").textContent = pct + "%";
   $("kAtendidos").textContent = n;
   $("kProm").textContent = n ? Sla.duracion(suma/n) : "00:00";
+  $("kCeva").textContent = nC ? Sla.duracion(sumaC/nC) : "00:00";
   $("kMax").textContent  = n ? Sla.duracion(max) : "00:00";
   $("kMin").textContent  = n ? Sla.duracion(min) : "00:00";
   $("kCv").textContent = v; $("kCa").textContent = a; $("kCr").textContent = r;
@@ -1108,12 +1182,13 @@ function exportarCsv(){
   if(!lista.length){ alert("El historial está vacío: no hay nada para exportar."); return; }
 
   var sep = ";";
-  var filas = [["Cliente","Pedido","Lineas","Hora inicio","Hora fin","Duracion","Estado final"].join(sep)];
+  var filas = [["Cliente","Pedido","Tipo","Lineas","Hora inicio","Parada CEVA","Hora fin","Tiempo CEVA","Tiempo Mostrador","Estado final"].join(sep)];
 
   for(var i=0;i<lista.length;i++){
     var h = lista[i];
-    filas.push([ campo(h.cliente), campo(h.entrega), h.lineas,
-      Sla.fechaHora(h.inicio), Sla.fechaHora(h.fin), Sla.duracion(h.duracion), etiqueta(h.estado) ].join(sep));
+    filas.push([ campo(h.cliente), campo(h.entrega), (h.tipo === "altura" ? "Altura" : "Piso"), h.lineas,
+      Sla.fechaHora(h.inicio), (h.cevaFin ? Sla.hora(h.cevaFin) : ""), Sla.fechaHora(h.fin),
+      (typeof h.duracionCeva === "number" ? Sla.duracion(h.duracionCeva) : ""), Sla.duracion(h.duracion), etiqueta(h.estado) ].join(sep));
   }
 
   var blob = new Blob(["\uFEFF" + filas.join("\r\n")], {type:"text/csv;charset=utf-8;"});
@@ -1149,12 +1224,14 @@ function pintarConfig(){
   var c = Sla.limites();
   $("cfgVerde").value = c.verdeMin;
   $("cfgAmarillo").value = c.amarilloMin;
+  $("cfgAlturaVerde").value = c.alturaVerdeMin;
+  $("cfgAlturaAmarillo").value = c.alturaAmarilloMin;
   pintarTextos();
 }
 
 function pintarTextos(){
   var c = Sla.limites();
-  $("subtitulo").textContent = "Verde hasta " + c.verdeMin + " min · Amarillo hasta " + c.amarilloMin + " min · Rojo por encima";
+  $("subtitulo").textContent = "Verde hasta " + c.verdeMin + " min · Amarillo hasta " + c.amarilloMin + " min · Rojo por encima  |  Altura: " + c.alturaVerdeMin + " / " + c.alturaAmarilloMin + " min";
   $("muestraVerde").textContent    = "Verde: de 0 a " + (c.verdeMin-1) + " min con 59 s";
   $("muestraAmarillo").textContent = "Amarillo: de " + c.verdeMin + " a " + (c.amarilloMin-1) + " min con 59 s";
   $("muestraRojo").textContent     = "Rojo: desde " + c.amarilloMin + " min";
@@ -1162,6 +1239,7 @@ function pintarTextos(){
 
 function guardarConfig(){
   var v = Number($("cfgVerde").value), a = Number($("cfgAmarillo").value), ok = $("okCfg");
+  var av = Number($("cfgAlturaVerde").value), aa = Number($("cfgAlturaAmarillo").value);
   ok.style.color = "";
 
   if(!v || v < 1 || !a || a < 1){
@@ -1175,7 +1253,18 @@ function guardarConfig(){
     return;
   }
 
-  Sla.aplicar({ verdeMin:Math.round(v), amarilloMin:Math.round(a) });
+  if(!av || av < 1 || !aa || aa < 1){
+    ok.style.color = "var(--rojo-vivo)";
+    ok.textContent = "Los límites de altura tienen que ser mayores a cero.";
+    return;
+  }
+  if(aa <= av){
+    ok.style.color = "var(--rojo-vivo)";
+    ok.textContent = "En altura, el límite rojo tiene que ser mayor que el verde.";
+    return;
+  }
+
+  Sla.aplicar({ verdeMin:Math.round(v), amarilloMin:Math.round(a), alturaVerdeMin:Math.round(av), alturaAmarilloMin:Math.round(aa) });
   ok.textContent = "Límites guardados. El tablero ya está reclasificado.";
   pintarTextos();
   dibujarActivos(true);
@@ -1185,6 +1274,8 @@ function guardarConfig(){
 function volverDefecto(){
   $("cfgVerde").value = Datos.DEFECTO.verdeMin;
   $("cfgAmarillo").value = Datos.DEFECTO.amarilloMin;
+  $("cfgAlturaVerde").value = Datos.DEFECTO.alturaVerdeMin;
+  $("cfgAlturaAmarillo").value = Datos.DEFECTO.alturaAmarilloMin;
   guardarConfig();
 }
 
@@ -1215,6 +1306,8 @@ function cambiarVista(nombre){
   $("lista").addEventListener("click", function(ev){
     var btn = ev.target.closest("button");
     if(!btn) return;
+    if(btn.hasAttribute("data-ceva"))        paradaCeva(btn.getAttribute("data-ceva"));
+    if(btn.hasAttribute("data-ceva-anular")) anularParadaCeva(btn.getAttribute("data-ceva-anular"));
     if(btn.hasAttribute("data-finalizar")) finalizarCliente(btn.getAttribute("data-finalizar"));
     if(btn.hasAttribute("data-eliminar"))  eliminarCliente(btn.getAttribute("data-eliminar"));
   });
@@ -1305,7 +1398,7 @@ function dibujarTablero(forzar){
   var grupos = { verde:[], amarillo:[], rojo:[] };
 
   for(var i=0;i<activos.length;i++){
-    grupos[Sla.estado(ahora - activos[i].inicio)].push(activos[i]);
+    grupos[Sla.estado(ahora - activos[i].inicio, activos[i].tipo)].push(activos[i]);
   }
   ["verde","amarillo","rojo"].forEach(function(color){
     grupos[color].sort(function(a,b){ return a.inicio - b.inicio; }); // el que más espera, arriba
@@ -1339,13 +1432,13 @@ function pintarColumna(idPila, lista, color, mensajeVacio){
   for(var i=0;i<lista.length;i++){
     var c = lista[i];
     var ms = ahora - c.inicio;
-    var largo = Sla.consumo(ms) * CIRC;
+    var largo = Sla.consumo(ms, c.tipo) * CIRC;
     var salto = (estadoPrevio[c.id] && estadoPrevio[c.id] !== color) ? " salto" : "";
 
     html +=
-      '<article class="ficha ' + color + salto + '" data-inicio="' + c.inicio + '">' +
+      '<article class="ficha ' + color + salto + '" data-inicio="' + c.inicio + '" data-tipo="' + (c.tipo === "altura" ? "altura" : "piso") + '">' +
         "<div>" +
-          '<div class="cliente">' + texto(c.cliente) + "</div>" +
+          '<div class="cliente">' + texto(c.cliente) + (c.tipo === "altura" ? '<span class="tv-tipo">ALTURA</span>' : '<span class="tv-tipo">PISO</span>') + "</div>" +
           '<div class="datos">Entrega ' + texto(c.entrega) + " · " + texto(c.lineas) + " líneas</div>" +
           '<div class="llegada">Llegada ' + Sla.hora(c.inicio) + "</div>" +
         "</div>" +
@@ -1378,7 +1471,7 @@ function refrescarMedidores(){
   var fichas = document.querySelectorAll(".ficha");
   for(var i=0;i<fichas.length;i++){
     var ms = ahora - Number(fichas[i].getAttribute("data-inicio"));
-    var largo = Sla.consumo(ms) * CIRC;
+    var largo = Sla.consumo(ms, fichas[i].getAttribute("data-tipo")) * CIRC;
     fichas[i].querySelector(".tiempo").textContent = Sla.duracion(ms);
     fichas[i].querySelector(".avance").setAttribute("stroke-dasharray", largo.toFixed(2) + " " + (CIRC-largo).toFixed(2));
   }
@@ -1389,10 +1482,10 @@ function refrescarMedidores(){
    ============================================================ */
 function pintarTextosSla(){
   var c = Sla.limites();
-  $("tvSubtitulo").textContent   = "Verde hasta " + c.verdeMin + " min · Amarillo hasta " + c.amarilloMin + " min · Rojo por encima";
-  $("tvLimVerde").textContent    = "menos de " + c.verdeMin + " min";
-  $("tvLimAmarillo").textContent = c.verdeMin + " a " + c.amarilloMin + " min";
-  $("tvLimRojo").textContent     = c.amarilloMin + " min o más";
+  $("tvSubtitulo").textContent   = "Piso: verde hasta " + c.verdeMin + " min · amarillo hasta " + c.amarilloMin + " min  |  Altura: verde hasta " + c.alturaVerdeMin + " min · amarillo hasta " + c.alturaAmarilloMin + " min";
+  $("tvLimVerde").textContent    = "piso < " + c.verdeMin + " · altura < " + c.alturaVerdeMin + " min";
+  $("tvLimAmarillo").textContent = "piso " + c.verdeMin + "-" + c.amarilloMin + " · altura " + c.alturaVerdeMin + "-" + c.alturaAmarilloMin + " min";
+  $("tvLimRojo").textContent     = "piso ≥ " + c.amarilloMin + " · altura ≥ " + c.alturaAmarilloMin + " min";
 }
 
 /* ============================================================
